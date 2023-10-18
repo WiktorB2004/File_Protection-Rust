@@ -8,6 +8,8 @@
 // TODO(#8): Store file encryption method, different custom file extensions?
 
 use ncurses::*;
+use std::fs;
+use std::path::Path;
 
 const REGULAR_PAIR: i16 = 0;
 const HIGHLIGHT_PAIR: i16 = 1;
@@ -32,7 +34,7 @@ struct UI {
 
 impl UI {
     fn begin(&mut self, pos: Vec2) {
-        // Assert if the pos is empty
+        // Assert if the pos and size is empty
 
         self.pos = pos;
         self.size = Vec2::new(0, 0)
@@ -77,7 +79,47 @@ impl UI {
     }
 }
 
+#[derive(Default)]
+struct FileExplorer {
+    path: String,
+    file_list: Vec<String>,
+}
+
+impl FileExplorer {
+    fn begin(&mut self, path: String) {
+        self.path = path;
+        self.file_list = Vec::<String>::new();
+    }
+
+    fn change_path(&mut self, new_path: String) {
+        self.file_list.clear();
+        self.path = new_path;
+    }
+
+    fn dir_down(&mut self) {
+        self.change_path(format!("../{}", self.path))
+    }
+
+    fn get_files(&mut self) -> Vec<String> {
+        let paths = fs::read_dir(&mut self.path).unwrap();
+
+        for path in paths {
+            self.file_list
+                .push(path.unwrap().path().display().to_string())
+        }
+        return self.file_list.clone();
+    }
+
+    fn end() {
+        return;
+    }
+}
+
 fn main() {
+    let mut explorer: FileExplorer = FileExplorer::default();
+    explorer.begin("./".to_string());
+    let mut file_list: Vec<String> = explorer.get_files();
+
     initscr();
     noecho();
     keypad(stdscr(), true);
@@ -88,10 +130,9 @@ fn main() {
     init_pair(REGULAR_PAIR, COLOR_WHITE, COLOR_BLACK);
     init_pair(HIGHLIGHT_PAIR, COLOR_BLACK, COLOR_WHITE);
 
-    let mut file_list: Vec<String> = vec!["1".to_string(), "2".to_string()];
     refresh();
-    let mut quit = false;
-    let mut ui = UI::default();
+    let mut quit: bool = false;
+    let mut ui: UI = UI::default();
     let mut focus: i32 = 0;
 
     while !quit {
@@ -104,11 +145,14 @@ fn main() {
         ui.end();
 
         let key: i32 = getch();
-        match key as u8 as char {
-            'w' => ui.list_up(&mut focus),
-
-            's' => ui.list_down(&mut focus, &file_list),
-            'q' => {
+        match key {
+            constants::KEY_UP => ui.list_up(&mut focus),
+            constants::KEY_DOWN => ui.list_down(&mut focus, &file_list),
+            115 => {
+                explorer.dir_down();
+                file_list = explorer.get_files();
+            }
+            113 => {
                 quit = true;
             }
             _ => {}
@@ -116,5 +160,6 @@ fn main() {
 
         refresh();
     }
+    // explorer.end();
     endwin();
 }
