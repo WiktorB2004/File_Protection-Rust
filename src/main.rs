@@ -4,7 +4,7 @@
 // TODO(#4): Implement choice of files from printed list
 // TODO(#5): Implement file content encryption
 // TODO(#6): Implement file content decryption
-// TODO: Create option to choose encryption method
+// TODO(#7): Create option to choose encryption method
 // TODO: Store file encryption method, different custom file extensions?
 
 fn main() {
