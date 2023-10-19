@@ -3,6 +3,7 @@
 // TODO(#6): Implement file content decryption
 // TODO(#7): Create option to choose encryption method
 // TODO(#8): Store file encryption method, different custom file extensions?
+// TODO(#15): Add error handling
 
 use ncurses::*;
 use std::path::Path;
@@ -95,7 +96,11 @@ impl FileExplorer {
         self.path = new_path;
     }
 
-    fn dir_up(&mut self, focus: i32) {}
+    fn dir_up(&mut self, focus: &mut i32) {
+        let path = Path::new(&self.curr_dir[*focus as usize]);
+
+        if path.is_dir() {}
+    }
 
     fn dir_down(&mut self) {
         self.file_list.clear();
@@ -165,7 +170,7 @@ fn main() {
                 file_list = explorer.get_file_list(true);
             }
             10 => {
-                explorer.dir_up(focus);
+                explorer.dir_up(&mut focus);
                 file_list = explorer.get_file_list(true);
             }
             113 => {
