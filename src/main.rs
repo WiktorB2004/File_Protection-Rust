@@ -6,7 +6,7 @@
 // TODO(#15): Add error handling
 
 use ncurses::*;
-use std::path::Path;
+use std::{env, path::Path};
 
 const REGULAR_PAIR: i16 = 0;
 const HIGHLIGHT_PAIR: i16 = 1;
@@ -80,32 +80,39 @@ impl UI {
 struct FileExplorer {
     path: String,
     file_list: Vec<String>,
-    curr_dir: Vec<String>,
 }
 
 // TODO(#14): Restructure and optimize FileExplorer struct
 impl FileExplorer {
-    fn begin(&mut self, path: String) {
-        self.path = path;
-        self.file_list = Vec::<String>::new();
+    fn begin(&mut self) {
+        let pwd = env::current_dir().unwrap();
+        self.path = pwd.to_str().unwrap().to_string();
+        self.file_list = self.get_file_list();
+    }
+
+    fn refresh(&mut self) {
+        self.file_list.clear();
+        self.get_file_list();
     }
 
     fn change_path(&mut self, new_path: String) {
-        self.file_list.clear();
-        self.curr_dir.clear();
-        self.path = new_path;
+        let path = Path::new(&self.path);
+        self.path = path.join(new_path).display().to_string();
+        self.refresh();
     }
 
     fn dir_up(&mut self, focus: &mut i32) {
-        let path = Path::new(&self.curr_dir[*focus as usize]);
-
-        if path.is_dir() {}
+        let path = Path::new(&self.path);
+        let new_path = path.join(self.file_list[*focus as usize].clone());
+        if new_path.is_dir() {
+            self.change_path(new_path.display().to_string());
+        }
     }
 
+    // TODO(#16): Create error handling for moving down from lowest level folder
     fn dir_down(&mut self) {
-        self.file_list.clear();
-        self.curr_dir.clear();
-        self.path = format!("../{}", self.path)
+        let path = Path::new(&self.path);
+        self.change_path(path.parent().unwrap().display().to_string());
     }
 
     fn get_files(&mut self) {
@@ -113,29 +120,25 @@ impl FileExplorer {
 
         for entry in curr_path.read_dir().expect("read_dir call failes") {
             if let Ok(entry) = entry {
-                self.file_list.push(format!("{:?}", entry.path()));
-                self.curr_dir.push(format!("{:?}", entry.file_name()))
+                self.file_list.push(format!("{}", entry.path().display()));
             }
         }
     }
 
-    fn get_file_list(&mut self, stripped: bool) -> Vec<String> {
+    fn get_file_list(&mut self) -> Vec<String> {
         self.get_files();
-        if stripped {
-            return self.curr_dir.clone();
-        }
         return self.file_list.clone();
     }
 
-    fn end() {
-        return;
+    fn end(&mut self) {
+        self.file_list.clear();
+        self.path.clear();
     }
 }
 
 fn main() {
     let mut explorer: FileExplorer = FileExplorer::default();
-    explorer.begin("./".to_string());
-    let mut file_list: Vec<String> = explorer.get_file_list(true);
+    explorer.begin();
 
     initscr();
     noecho();
@@ -151,11 +154,19 @@ fn main() {
     let mut quit: bool = false;
     let mut ui: UI = UI::default();
     let mut focus: i32 = 0;
+    let mut notification: String = String::new();
 
     while !quit {
+        let mut file_list: Vec<String> = explorer.file_list.clone();
         erase();
 
         ui.begin(Vec2::new(0, 0));
+        {
+            ui.label(&notification, REGULAR_PAIR);
+        }
+        ui.end();
+
+        ui.begin(Vec2::new(2, 0));
         {
             ui.list_elements(&mut file_list, focus as usize)
         }
@@ -167,11 +178,11 @@ fn main() {
             constants::KEY_DOWN => ui.list_down(&mut focus, &file_list),
             100 => {
                 explorer.dir_down();
-                file_list = explorer.get_file_list(true);
+                focus = 0;
             }
             10 => {
                 explorer.dir_up(&mut focus);
-                file_list = explorer.get_file_list(true);
+                focus = 0;
             }
             113 => {
                 quit = true;
@@ -181,6 +192,6 @@ fn main() {
 
         refresh();
     }
-    // explorer.end();
+    explorer.end();
     endwin();
 }
