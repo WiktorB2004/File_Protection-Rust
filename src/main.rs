@@ -5,7 +5,6 @@
 // TODO(#8): Store file encryption method, different custom file extensions?
 
 use ncurses::*;
-use std::fs;
 use std::path::Path;
 
 const REGULAR_PAIR: i16 = 0;
@@ -80,8 +79,10 @@ impl UI {
 struct FileExplorer {
     path: String,
     file_list: Vec<String>,
+    curr_dir: Vec<String>,
 }
 
+// TODO(#14): Restructure and optimize FileExplorer struct
 impl FileExplorer {
     fn begin(&mut self, path: String) {
         self.path = path;
@@ -90,19 +91,33 @@ impl FileExplorer {
 
     fn change_path(&mut self, new_path: String) {
         self.file_list.clear();
+        self.curr_dir.clear();
         self.path = new_path;
     }
 
+    fn dir_up(&mut self, focus: i32) {}
+
     fn dir_down(&mut self) {
-        self.change_path(format!("../{}", self.path))
+        self.file_list.clear();
+        self.curr_dir.clear();
+        self.path = format!("../{}", self.path)
     }
 
-    fn get_files(&mut self) -> Vec<String> {
-        let paths = fs::read_dir(&mut self.path).unwrap();
+    fn get_files(&mut self) {
+        let curr_path = Path::new(&self.path);
 
-        for path in paths {
-            self.file_list
-                .push(path.unwrap().path().display().to_string())
+        for entry in curr_path.read_dir().expect("read_dir call failes") {
+            if let Ok(entry) = entry {
+                self.file_list.push(format!("{:?}", entry.path()));
+                self.curr_dir.push(format!("{:?}", entry.file_name()))
+            }
+        }
+    }
+
+    fn get_file_list(&mut self, stripped: bool) -> Vec<String> {
+        self.get_files();
+        if stripped {
+            return self.curr_dir.clone();
         }
         return self.file_list.clone();
     }
@@ -115,7 +130,7 @@ impl FileExplorer {
 fn main() {
     let mut explorer: FileExplorer = FileExplorer::default();
     explorer.begin("./".to_string());
-    let mut file_list: Vec<String> = explorer.get_files();
+    let mut file_list: Vec<String> = explorer.get_file_list(true);
 
     initscr();
     noecho();
@@ -145,9 +160,13 @@ fn main() {
         match key {
             constants::KEY_UP => ui.list_up(&mut focus),
             constants::KEY_DOWN => ui.list_down(&mut focus, &file_list),
-            115 => {
+            100 => {
                 explorer.dir_down();
-                file_list = explorer.get_files();
+                file_list = explorer.get_file_list(true);
+            }
+            10 => {
+                explorer.dir_up(focus);
+                file_list = explorer.get_file_list(true);
             }
             113 => {
                 quit = true;
