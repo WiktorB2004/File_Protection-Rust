@@ -1,7 +1,4 @@
-// TODO(#4): Implement navigation and choice of files from printed list
-// TODO(#5): Implement file content encryption
 // TODO(#6): Implement file content decryption
-// TODO(#7): Create option to choose encryption method
 // TODO(#8): Store file encryption method, different custom file extensions?
 // TODO(#15): Add error handling
 
@@ -101,11 +98,14 @@ impl FileExplorer {
         self.refresh();
     }
 
-    fn dir_up(&mut self, focus: &mut i32) {
+    fn handle_select(&mut self, focus: &mut i32) -> Option<String> {
         let path = Path::new(&self.path);
         let new_path = path.join(self.file_list[*focus as usize].clone());
         if new_path.is_dir() {
             self.change_path(new_path.display().to_string());
+            return None;
+        } else {
+            return Some(new_path.display().to_string());
         }
     }
 
@@ -154,6 +154,7 @@ fn main() {
     let mut quit: bool = false;
     let mut ui: UI = UI::default();
     let mut focus: i32 = 0;
+    let mut key_curr = None;
     let mut notification: String = String::new();
 
     while !quit {
@@ -172,25 +173,45 @@ fn main() {
         }
         ui.end();
 
-        let key: i32 = getch();
-        match key {
-            constants::KEY_UP => ui.list_up(&mut focus),
-            constants::KEY_DOWN => ui.list_down(&mut focus, &file_list),
-            100 => {
-                explorer.dir_down();
-                focus = 0;
+        if let Some(key) = key_curr.take() {
+            match key {
+                constants::KEY_UP => ui.list_up(&mut focus),
+                constants::KEY_DOWN => ui.list_down(&mut focus, &file_list),
+                100 => {
+                    explorer.dir_down();
+                    notification.push_str("Moved directory down");
+                    focus = 0;
+                }
+                10 => {
+                    if let Some(res) = explorer.handle_select(&mut focus) {
+                        // TODO(#5): Implement file content encryption
+                        // TODO(#7): Create option to choose encryption method
+                        notification.push_str("This is a file");
+                    } else {
+                        notification.push_str("Moved directory up");
+                        focus = 0;
+                    }
+                }
+                113 => {
+                    quit = true;
+                }
+                _ => {
+                    key_curr = Some(key);
+                }
             }
-            10 => {
-                explorer.dir_up(&mut focus);
-                focus = 0;
-            }
-            113 => {
-                quit = true;
-            }
-            _ => {}
+        }
+
+        if let Some('q') = key_curr.take().map(|x| x as u8 as char) {
+            quit = true;
         }
 
         refresh();
+
+        let key = getch();
+        if key != ERR {
+            notification.clear();
+            key_curr = Some(key);
+        }
     }
     explorer.end();
     endwin();
