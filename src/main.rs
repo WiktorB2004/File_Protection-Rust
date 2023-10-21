@@ -3,7 +3,7 @@
 // TODO(#15): Add error handling
 
 use ncurses::*;
-use std::{env, path::Path};
+use std::{env, fs, path::Path};
 
 const REGULAR_PAIR: i16 = 0;
 const HIGHLIGHT_PAIR: i16 = 1;
@@ -42,11 +42,11 @@ impl UI {
         self.pos.row += 1;
     }
 
-    fn list_elements(&mut self, list: &mut Vec<String>, focus: usize) {
+    fn list_elements(&mut self, list: &mut Vec<String>, file_focus: usize) {
         for (index, item) in list.iter().enumerate() {
             self.label(
                 &format!("{}", item),
-                if index == focus {
+                if index == file_focus {
                     HIGHLIGHT_PAIR
                 } else {
                     REGULAR_PAIR
@@ -55,15 +55,15 @@ impl UI {
         }
     }
 
-    fn list_up(&mut self, focus: &mut i32) {
-        if *focus > 0 {
-            *focus -= 1;
+    fn list_up(&mut self, file_focus: &mut i32) {
+        if *file_focus > 0 {
+            *file_focus -= 1;
         }
     }
 
-    fn list_down(&mut self, focus: &mut i32, list: &[String]) {
-        if *focus < (list.len() - 1) as i32 {
-            *focus += 1;
+    fn list_down(&mut self, file_focus: &mut i32, list: &[String]) {
+        if *file_focus < (list.len() - 1) as i32 {
+            *file_focus += 1;
         }
     }
 
@@ -97,9 +97,9 @@ impl FileExplorer {
         self.refresh();
     }
 
-    fn handle_select(&mut self, focus: &mut i32) -> Option<String> {
+    fn handle_select(&mut self, file_focus: &mut i32) -> Option<String> {
         let path: &Path = Path::new(&self.path);
-        let new_path = path.join(self.file_list[*focus as usize].clone());
+        let new_path = path.join(self.file_list[*file_focus as usize].clone());
         if new_path.is_dir() {
             self.set_path(new_path.display().to_string());
             return None;
@@ -136,10 +136,46 @@ impl FileExplorer {
     }
 }
 
+#[derive(Default)]
+struct FileHandler {
+    filepath: String,
+    method: String,
+}
+
+impl FileHandler {
+    fn handle(&mut self, path: String, method: String) -> Option<String> {
+        self.set_path(path);
+        self.method = method;
+        match self.method.as_str() {
+            "read" => {
+                let file_content = self.read_content().unwrap();
+                return Some(file_content);
+            }
+            _ => {}
+        }
+
+        return None;
+    }
+
+    fn set_path(&mut self, path: String) {
+        self.filepath = path;
+    }
+
+    fn read_content(&mut self) -> Result<String, Box<dyn std::error::Error>> {
+        let data = fs::read_to_string(self.filepath.clone())?;
+        Ok(data)
+    }
+}
+
 fn main() {
     let mut explorer: FileExplorer = FileExplorer::default();
+    let mut filehandler: FileHandler = FileHandler::default();
+    let mut action_list: Vec<String> = vec![
+        "Read file".to_string(),
+        "Encrypt".to_string(),
+        "Decrypt".to_string(),
+    ];
     explorer.begin();
-
     initscr();
     noecho();
     keypad(stdscr(), true);
@@ -153,15 +189,18 @@ fn main() {
     refresh();
     let mut quit: bool = false;
     let mut ui: UI = UI::default();
-    let mut focus: i32 = 0;
+    let mut file_focus: i32 = 0;
+    let mut action_focus: i32 = 0;
     let mut key_curr = None;
-    let mut notification: String =
-        "Push enter to select directory or file, move by clicking arrows, and click d to go directory down. Press q to quit."
-            .to_string();
+    let mut notification = String::new();
 
     while !quit {
         let mut file_list: Vec<String> = explorer.file_list.clone();
         erase();
+
+        let mut x = 0;
+        let mut y = 0;
+        getmaxyx(stdscr(), &mut y, &mut x);
 
         ui.begin(Vec2::new(0, 0));
         {
@@ -171,30 +210,46 @@ fn main() {
 
         ui.begin(Vec2::new(2, 0));
         {
-            ui.list_elements(&mut file_list, focus as usize);
+            ui.list_elements(&mut file_list, file_focus as usize);
+        }
+        ui.end();
+
+        ui.begin(Vec2::new(2, x / 2));
+        {
+            ui.list_elements(&mut action_list, action_focus as usize);
         }
         ui.end();
 
         if let Some(key) = key_curr.take() {
             match key {
-                constants::KEY_UP => ui.list_up(&mut focus),
-                constants::KEY_DOWN => ui.list_down(&mut focus, &file_list),
+                constants::KEY_UP => ui.list_up(&mut file_focus),
+                constants::KEY_DOWN => ui.list_down(&mut file_focus, &file_list),
                 100 => {
                     if explorer.dir_down() {
                         notification.push_str("Moved directory down");
-                        focus = 0;
+                        file_focus = 0;
                     } else {
                         notification.push_str("You are at the lowest directory")
                     }
                 }
                 10 => {
-                    if let Some(res) = explorer.handle_select(&mut focus) {
+                    if let Some(filepath) = explorer.handle_select(&mut file_focus) {
                         // TODO(#5): Implement file content encryption
                         // TODO(#7): Create option to choose encryption method
-                        notification.push_str("This is a file");
+                        filehandler.handle(filepath, action_list[action_focus as usize].clone());
                     } else {
                         notification.push_str("Moved directory up");
-                        focus = 0;
+                        file_focus = 0;
+                    }
+                }
+                119 => {
+                    if action_focus > 0 {
+                        action_focus -= 1;
+                    }
+                }
+                115 => {
+                    if action_focus < (action_list.len() - 1) as i32 {
+                        action_focus += 1;
                     }
                 }
                 113 => {
