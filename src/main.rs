@@ -155,7 +155,9 @@ fn main() {
     let mut ui: UI = UI::default();
     let mut focus: i32 = 0;
     let mut key_curr = None;
-    let mut notification: String = String::new();
+    let mut notification: String =
+        "Push enter to select directory or file, move by clicking arrows, and click d to go directory down"
+            .to_string();
 
     while !quit {
         let mut file_list: Vec<String> = explorer.file_list.clone();
@@ -169,7 +171,7 @@ fn main() {
 
         ui.begin(Vec2::new(2, 0));
         {
-            ui.list_elements(&mut file_list, focus as usize)
+            ui.list_elements(&mut file_list, focus as usize);
         }
         ui.end();
 
