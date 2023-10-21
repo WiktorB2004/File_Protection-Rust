@@ -2,10 +2,7 @@
 // TODO(#8): Store file encryption method, different custom file extensions?
 // TODO(#15): Add error handling
 // TODO(#19): Shorten path string
-<<<<<<< HEAD
 // TODO(#20): Make sure it is working with Linux and Windows
-=======
->>>>>>> c55db28690d71439476602b7e5fbf1c33f25cfa9
 
 use ncurses::*;
 use std::{env, path::Path};
