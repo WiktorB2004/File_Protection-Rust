@@ -85,10 +85,11 @@ impl FileExplorer {
     fn begin(&mut self) {
         let working_dir = env::current_dir().unwrap();
         self.path = working_dir.to_str().unwrap().to_string();
-        self.refresh();
+        self.refresh_dir();
     }
 
-    fn refresh(&mut self) {
+    fn refresh_dir(&mut self) {
+        erase();
         self.file_list.clear();
         self.file_list = self.scan_path();
     }
@@ -96,7 +97,7 @@ impl FileExplorer {
     fn set_path(&mut self, new_path: String) {
         let path = Path::new(&self.path);
         self.path = path.join(new_path).display().to_string();
-        self.refresh();
+        self.refresh_dir();
     }
 
     fn handle_select(&mut self, file_focus: &mut i32) -> Option<String> {
@@ -145,11 +146,12 @@ struct FileHandler {
 }
 
 impl FileHandler {
-    fn handle(&mut self, path: String, method: String) {
+    fn handle(&mut self, path: String, method: String, notification: &mut String) {
         self.set_path(path);
         self.method = method;
         match self.method.as_str() {
             "Read file" => {
+                notification.push_str("Opening selected file");
                 self.open_file();
             }
             _ => {}
@@ -231,10 +233,14 @@ fn main() {
                     }
                 }
                 10 => {
+                    // TODO(#5): Implement file content encryption
+                    // TODO(#7): Create option to choose encryption method
                     if let Some(filepath) = explorer.handle_select(&mut file_focus) {
-                        // TODO(#5): Implement file content encryption
-                        // TODO(#7): Create option to choose encryption method
-                        filehandler.handle(filepath, action_list[action_focus as usize].clone());
+                        filehandler.handle(
+                            filepath,
+                            action_list[action_focus as usize].clone(),
+                            &mut notification,
+                        );
                     } else {
                         notification.push_str("Moved directory up");
                         file_focus = 0;
