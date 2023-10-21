@@ -1,9 +1,11 @@
 // TODO(#6): Implement file content decryption
 // TODO(#8): Store file encryption method, different custom file extensions?
 // TODO(#15): Add error handling
+// TODO(#19): Shorten path string
+// TODO(#20): Make sure it is working with Linux and Windows
 
 use ncurses::*;
-use std::{env, fs, path::Path};
+use std::{env, path::Path};
 
 const REGULAR_PAIR: i16 = 0;
 const HIGHLIGHT_PAIR: i16 = 1;
@@ -143,27 +145,23 @@ struct FileHandler {
 }
 
 impl FileHandler {
-    fn handle(&mut self, path: String, method: String) -> Option<String> {
+    fn handle(&mut self, path: String, method: String) {
         self.set_path(path);
         self.method = method;
         match self.method.as_str() {
-            "read" => {
-                let file_content = self.read_content().unwrap();
-                return Some(file_content);
+            "Read file" => {
+                self.open_file();
             }
             _ => {}
         }
+    }
 
-        return None;
+    fn open_file(&mut self) {
+        let _ = open::that(self.filepath.clone());
     }
 
     fn set_path(&mut self, path: String) {
         self.filepath = path;
-    }
-
-    fn read_content(&mut self) -> Result<String, Box<dyn std::error::Error>> {
-        let data = fs::read_to_string(self.filepath.clone())?;
-        Ok(data)
     }
 }
 
