@@ -79,55 +79,55 @@ struct FileExplorer {
     file_list: Vec<String>,
 }
 
-// TODO(#14): Restructure and optimize FileExplorer struct
 impl FileExplorer {
     fn begin(&mut self) {
-        let pwd = env::current_dir().unwrap();
-        self.path = pwd.to_str().unwrap().to_string();
-        self.file_list = self.get_file_list();
+        let working_dir = env::current_dir().unwrap();
+        self.path = working_dir.to_str().unwrap().to_string();
+        self.refresh();
     }
 
     fn refresh(&mut self) {
         self.file_list.clear();
-        self.get_file_list();
+        self.file_list = self.scan_path();
     }
 
-    fn change_path(&mut self, new_path: String) {
+    fn set_path(&mut self, new_path: String) {
         let path = Path::new(&self.path);
         self.path = path.join(new_path).display().to_string();
         self.refresh();
     }
 
     fn handle_select(&mut self, focus: &mut i32) -> Option<String> {
-        let path = Path::new(&self.path);
+        let path: &Path = Path::new(&self.path);
         let new_path = path.join(self.file_list[*focus as usize].clone());
         if new_path.is_dir() {
-            self.change_path(new_path.display().to_string());
+            self.set_path(new_path.display().to_string());
             return None;
         } else {
             return Some(new_path.display().to_string());
         }
     }
 
-    // TODO(#16): Create error handling for moving down from lowest level folder
-    fn dir_down(&mut self) {
+    fn dir_down(&mut self) -> bool {
         let path = Path::new(&self.path);
-        self.change_path(path.parent().unwrap().display().to_string());
+
+        if path.parent() != None {
+            self.set_path(path.parent().unwrap().display().to_string());
+            return true;
+        }
+        return false;
     }
 
-    fn get_files(&mut self) {
+    fn scan_path(&mut self) -> Vec<String> {
         let curr_path = Path::new(&self.path);
+        let mut result: Vec<String> = Vec::<String>::new();
 
         for entry in curr_path.read_dir().expect("read_dir call failes") {
             if let Ok(entry) = entry {
-                self.file_list.push(format!("{}", entry.path().display()));
+                result.push(format!("{}", entry.path().display()));
             }
         }
-    }
-
-    fn get_file_list(&mut self) -> Vec<String> {
-        self.get_files();
-        return self.file_list.clone();
+        return result;
     }
 
     fn end(&mut self) {
@@ -156,7 +156,7 @@ fn main() {
     let mut focus: i32 = 0;
     let mut key_curr = None;
     let mut notification: String =
-        "Push enter to select directory or file, move by clicking arrows, and click d to go directory down"
+        "Push enter to select directory or file, move by clicking arrows, and click d to go directory down. Press q to quit."
             .to_string();
 
     while !quit {
@@ -180,9 +180,12 @@ fn main() {
                 constants::KEY_UP => ui.list_up(&mut focus),
                 constants::KEY_DOWN => ui.list_down(&mut focus, &file_list),
                 100 => {
-                    explorer.dir_down();
-                    notification.push_str("Moved directory down");
-                    focus = 0;
+                    if explorer.dir_down() {
+                        notification.push_str("Moved directory down");
+                        focus = 0;
+                    } else {
+                        notification.push_str("You are at the lowest directory")
+                    }
                 }
                 10 => {
                     if let Some(res) = explorer.handle_select(&mut focus) {
