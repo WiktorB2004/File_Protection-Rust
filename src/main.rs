@@ -5,7 +5,12 @@
 // TODO(#20): Make sure it is working with Linux and Windows
 
 use ncurses::*;
-use std::{env, path::Path};
+use std::{
+    env,
+    fs::{self, File},
+    io::Write,
+    path::Path,
+};
 
 const REGULAR_PAIR: i16 = 0;
 const HIGHLIGHT_PAIR: i16 = 1;
@@ -146,7 +151,7 @@ struct FileHandler {
 }
 
 impl FileHandler {
-    fn handle(&mut self, path: String, method: String, notification: &mut String) {
+    fn handle_action(&mut self, path: String, method: String, notification: &mut String) {
         self.set_path(path);
         self.method = method;
         match self.method.as_str() {
@@ -154,8 +159,39 @@ impl FileHandler {
                 notification.push_str("Opening selected file");
                 self.open_file();
             }
+            "Encrypt" => self.caesar_encrypt(1),
             _ => {}
         }
+    }
+
+    fn caesar_encrypt(&mut self, mut shift: u8) {
+        let mut file_content: Vec<u8> = self.read_file_vec().expect("Error while reading file");
+        shift = shift % 26;
+        for (idx, chr) in file_content.clone().iter().enumerate() {
+            file_content[idx] = chr + shift;
+        }
+        let filename = Path::new(&self.filepath)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        let file_ext = format!("{}ca", shift);
+        self.write_file_vec(file_content, &filename, file_ext);
+    }
+
+    fn write_file_vec(&mut self, content: Vec<u8>, filename: &String, ext: String) {
+        File::create(&self.filepath)
+            .unwrap()
+            .write_all(&content)
+            .expect("Couldnt write to file");
+
+        fs::rename(filename, format!("{}.{}", ext, filename)).expect("Couldnt rename a file");
+    }
+
+    fn read_file_vec(&mut self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        let data = fs::read(self.filepath.clone())?;
+        Ok(data)
     }
 
     fn open_file(&mut self) {
@@ -195,6 +231,7 @@ fn main() {
     let mut notification = String::new();
 
     while !quit {
+        explorer.refresh_dir();
         let mut file_list: Vec<String> = explorer.file_list.clone();
         erase();
 
@@ -236,7 +273,7 @@ fn main() {
                     // TODO(#5): Implement file content encryption
                     // TODO(#7): Create option to choose encryption method
                     if let Some(filepath) = explorer.handle_select(&mut file_focus) {
-                        filehandler.handle(
+                        filehandler.handle_action(
                             filepath,
                             action_list[action_focus as usize].clone(),
                             &mut notification,
