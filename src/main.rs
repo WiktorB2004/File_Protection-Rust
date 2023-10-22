@@ -165,7 +165,7 @@ impl FileHandler {
         }
     }
 
-    // TODO: Add error handling for shifting out of bounds
+    // TODO(#21): Add error handling for shifting out of bounds
     fn caesar_encrypt(&mut self, mut shift: u8) {
         let mut file_content: Vec<u8> = self.read_file_vec().expect("Error while reading file");
         shift = shift % 26;
