@@ -160,10 +160,12 @@ impl FileHandler {
                 self.open_file();
             }
             "Encrypt" => self.caesar_encrypt(1),
+            "Decrypt" => self.caesar_decrypt(1),
             _ => {}
         }
     }
 
+    // TODO: Add error handling for shifting out of bounds
     fn caesar_encrypt(&mut self, mut shift: u8) {
         let mut file_content: Vec<u8> = self.read_file_vec().expect("Error while reading file");
         shift = shift % 26;
@@ -176,17 +178,36 @@ impl FileHandler {
             .to_str()
             .unwrap()
             .to_string();
-        let file_ext = format!("{}ca", shift);
-        self.write_file_vec(file_content, &filename, file_ext);
+        self.write_file_vec(file_content);
+        fs::rename(filename.clone(), format!("{}c.{}", shift, filename))
+            .expect("Couldnt rename a file");
     }
 
-    fn write_file_vec(&mut self, content: Vec<u8>, filename: &String, ext: String) {
+    fn caesar_decrypt(&mut self, mut shift: u8) {
+        let mut file_content: Vec<u8> = self.read_file_vec().expect("Error while reading file");
+        shift = shift % 26;
+        for (idx, chr) in file_content.clone().iter().enumerate() {
+            file_content[idx] = chr - shift;
+        }
+        let filename = Path::new(&self.filepath)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        self.write_file_vec(file_content);
+        let mut filename_vec: Vec<&str> = filename.split(".").collect();
+        let _ = filename_vec.remove(0);
+        let decrypted_filename = filename_vec.join(".");
+        fs::rename(filename.clone(), format!("{}", decrypted_filename))
+            .expect("Couldnt rename a file");
+    }
+
+    fn write_file_vec(&mut self, content: Vec<u8>) {
         File::create(&self.filepath)
             .unwrap()
             .write_all(&content)
             .expect("Couldnt write to file");
-
-        fs::rename(filename, format!("{}.{}", ext, filename)).expect("Couldnt rename a file");
     }
 
     fn read_file_vec(&mut self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
