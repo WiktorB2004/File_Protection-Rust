@@ -106,10 +106,10 @@ impl FileExplorer {
         self.refresh_dir();
     }
 
-    fn handle_select(&mut self, file_focus: &mut i32) -> Option<String> {
+    fn handle_select(&mut self, file_focus: &mut i32, action_focus: i32) -> Option<String> {
         let path: &Path = Path::new(&self.path);
         let new_path = path.join(self.file_list[*file_focus as usize].clone());
-        if new_path.is_dir() {
+        if new_path.is_dir() && action_focus != 3 {
             self.set_path(new_path.display().to_string());
             return None;
         } else {
@@ -163,7 +163,13 @@ struct FileHandler {
 }
 
 impl FileHandler {
-    fn handle_action(&mut self, path: String, method: String, notification: &mut String) {
+    fn handle_action(
+        &mut self,
+        path: String,
+        method: String,
+        notification: &mut String,
+        path_mode: &mut bool,
+    ) {
         self.set_path(path);
         self.method = method;
         match self.method.as_str() {
@@ -173,6 +179,9 @@ impl FileHandler {
             }
             "Encrypt" => self.caesar_encrypt(1),
             "Decrypt" => self.caesar_decrypt(1),
+            "Switch between full/short path" => {
+                *path_mode = !*path_mode;
+            }
             _ => {}
         }
     }
@@ -250,6 +259,7 @@ fn main() {
         "Read file".to_string(),
         "Encrypt".to_string(),
         "Decrypt".to_string(),
+        "Switch between full/short path".to_string(),
     ];
     explorer.begin();
     initscr();
@@ -267,12 +277,17 @@ fn main() {
     let mut ui: UI = UI::default();
     let mut file_focus: i32 = 0;
     let mut action_focus: i32 = 0;
+    let mut path_mode = true;
     let mut key_curr = None;
     let mut notification = String::new();
 
     while !quit {
         explorer.refresh_dir();
-        let mut file_list: Vec<String> = explorer.short_file_list.clone();
+        let mut file_list: Vec<String> = if path_mode {
+            explorer.short_file_list.clone()
+        } else {
+            explorer.file_list.clone()
+        };
         erase();
 
         let mut x = 0;
@@ -311,11 +326,12 @@ fn main() {
                 }
                 10 => {
                     // TODO(#7): Create option to choose encryption method
-                    if let Some(filepath) = explorer.handle_select(&mut file_focus) {
+                    if let Some(filepath) = explorer.handle_select(&mut file_focus, action_focus) {
                         filehandler.handle_action(
                             filepath,
                             action_list[action_focus as usize].clone(),
                             &mut notification,
+                            &mut path_mode,
                         );
                     } else {
                         notification.push_str("Moved directory up");
