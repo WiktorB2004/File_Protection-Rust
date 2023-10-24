@@ -1,6 +1,6 @@
 // TODO(#15): Add error handling
-// TODO(#19): Shorten path string
 // TODO(#20): Make sure it is working with Linux and Windows
+// TODO: Create documentation, README.md file
 
 use ncurses::*;
 use std::{
