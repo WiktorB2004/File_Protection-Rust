@@ -165,7 +165,6 @@ impl FileHandler {
         }
     }
 
-    // TODO(#21): Add error handling for shifting out of bounds
     fn caesar_encrypt(&mut self, mut shift: u8) {
         let mut file_content: Vec<u8> = self.read_file_vec().expect("Error while reading file");
         shift = shift % 26;
@@ -299,7 +298,6 @@ fn main() {
                     }
                 }
                 10 => {
-                    // TODO(#5): Implement file content encryption
                     // TODO(#7): Create option to choose encryption method
                     if let Some(filepath) = explorer.handle_select(&mut file_focus) {
                         filehandler.handle_action(
