@@ -170,7 +170,11 @@ impl FileHandler {
         let mut file_content: Vec<u8> = self.read_file_vec().expect("Error while reading file");
         shift = shift % 26;
         for (idx, chr) in file_content.clone().iter().enumerate() {
-            file_content[idx] = chr + shift;
+            let mut swap_char: u8 = chr + shift;
+            if swap_char > 126 {
+                swap_char = 31 + shift;
+            }
+            file_content[idx] = swap_char;
         }
         let filename = Path::new(&self.filepath)
             .file_name()
@@ -187,7 +191,11 @@ impl FileHandler {
         let mut file_content: Vec<u8> = self.read_file_vec().expect("Error while reading file");
         shift = shift % 26;
         for (idx, chr) in file_content.clone().iter().enumerate() {
-            file_content[idx] = chr - shift;
+            let mut swap_char: u8 = chr - shift;
+            if swap_char < 32 {
+                swap_char = 127 - shift;
+            }
+            file_content[idx] = swap_char;
         }
         let filename = Path::new(&self.filepath)
             .file_name()
