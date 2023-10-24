@@ -82,6 +82,7 @@ impl UI {
 struct FileExplorer {
     path: String,
     file_list: Vec<String>,
+    short_file_list: Vec<String>,
 }
 
 impl FileExplorer {
@@ -94,7 +95,9 @@ impl FileExplorer {
     fn refresh_dir(&mut self) {
         erase();
         self.file_list.clear();
+        self.short_file_list.clear();
         self.file_list = self.scan_path();
+        self.short_file_list = self.short_file_list();
     }
 
     fn set_path(&mut self, new_path: String) {
@@ -134,6 +137,17 @@ impl FileExplorer {
             }
         }
         return result;
+    }
+
+    fn short_file_list(&mut self) -> Vec<String> {
+        let mut res: Vec<String> = Vec::<String>::new();
+
+        for filepath in self.file_list.clone() {
+            let path = Path::new(&filepath);
+            let filename = path.file_name().unwrap();
+            res.push(format!("../{}", filename.to_str().unwrap().to_string()));
+        }
+        return res;
     }
 
     fn end(&mut self) {
@@ -258,7 +272,7 @@ fn main() {
 
     while !quit {
         explorer.refresh_dir();
-        let mut file_list: Vec<String> = explorer.file_list.clone();
+        let mut file_list: Vec<String> = explorer.short_file_list.clone();
         erase();
 
         let mut x = 0;
