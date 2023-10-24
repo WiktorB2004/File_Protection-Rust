@@ -1,5 +1,4 @@
 // TODO(#6): Implement file content decryption
-// TODO(#8): Store file encryption method, different custom file extensions?
 // TODO(#15): Add error handling
 // TODO(#19): Shorten path string
 // TODO(#20): Make sure it is working with Linux and Windows
