@@ -11,7 +11,7 @@ Project status: Mostly completed (25.10.2023)
 - [x] Create user friendly UI for the application
 - [ ] Create different encryption methods handling
 - [ ] Implement advanced encryption methods
-- [ ] (?) Switch between file explorer and action selector using TAB instead of w/s and arrows
+- [ ] (?) Switch between file explorer and action selector using TAB instead of w/s and arrows navigation
 
 
 
