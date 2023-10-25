@@ -1,13 +1,17 @@
 # File Encryption/Decryption with integrated file explorer in Rust
 Project start date: 18.10.2023  
 Project status: Mostly completed (25.10.2023)  
+
+![fileProtection-Rust](https://github.com/WiktorB2004/File_Protection-Rust/assets/62223421/70fe4352-80e8-47d9-b0d5-9da9c1874344)
+
 ## TODO
 - [x] Create custom File Explorer
 - [x] Implement basic Encryption/Decryption methods
 - [x] Create File Handler to encrypt/decrypt/modify files
 - [x] Create user friendly UI for the application
 - [ ] Create different encryption methods handling
-- [ ] Implement various advanced encryption methods
+- [ ] Implement advanced encryption methods
+- [ ] (?) Switch between file explorer and action selector using TAB instead of w/s and arrows
 
 
 
