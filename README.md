@@ -2,7 +2,8 @@
 Project start date: 18.10.2023  
 Project status: Mostly completed (25.10.2023)  
 
-![fileProtection-Rust](https://github.com/WiktorB2004/File_Protection-Rust/assets/62223421/70fe4352-80e8-47d9-b0d5-9da9c1874344)
+![file_protection](https://github.com/WiktorB2004/File_Protection-Rust/assets/62223421/86981089-c6b5-4630-bd79-55194a20ce07)
+
 
 ## TODO
 - [x] Create custom File Explorer
