@@ -1,6 +1,6 @@
 // TODO(#15): Add error handling
 // TODO(#20): Make sure it is working with Linux and Windows
-// TODO(#25): Create documentation, README.md file
+// TODO(#27): Implement more advanced encryption methods
 
 use ncurses::*;
 use std::{
@@ -172,13 +172,18 @@ impl FileHandler {
     ) {
         self.set_path(path);
         self.method = method;
+        // TODO(#26): Add notification about decrypting using incorrect method
         match self.method.as_str() {
             "Read file" => {
                 notification.push_str("Opening selected file");
                 self.open_file();
             }
-            "Encrypt" => self.caesar_encrypt(1),
-            "Decrypt" => self.caesar_decrypt(1),
+            "Encrypt Caesar-1" => self.caesar_encrypt(1),
+            "Encrypt Caesar-5" => self.caesar_encrypt(5),
+            "Encrypt Caesar-12" => self.caesar_encrypt(12),
+            "Decrypt Caesar-1" => self.caesar_decrypt(1),
+            "Decrypt Caesar-5" => self.caesar_decrypt(5),
+            "Decrypt Caesar-12" => self.caesar_decrypt(12),
             "Switch between full/short path" => {
                 *path_mode = !*path_mode;
             }
@@ -261,6 +266,12 @@ fn main() {
         "Decrypt".to_string(),
         "Switch between full/short path".to_string(),
     ];
+    let method_list: Vec<String> = vec![
+        "Caesar-1".to_string(),
+        "Caesar-5".to_string(),
+        "Caesar-12".to_string(),
+    ];
+
     explorer.begin();
     initscr();
     noecho();
@@ -277,6 +288,8 @@ fn main() {
     let mut ui: UI = UI::default();
     let mut file_focus: i32 = 0;
     let mut action_focus: i32 = 0;
+    let mut encryption_select: i32 = 0;
+    let mut decryption_select: i32 = 0;
     let mut path_mode = true;
     let mut key_curr = None;
     let mut notification = String::new();
@@ -308,14 +321,46 @@ fn main() {
 
         ui.begin(Vec2::new(2, x / 2));
         {
+            action_list[1] = format!("Encrypt {}", method_list[encryption_select as usize]);
+            action_list[2] = format!("Decrypt {}", method_list[decryption_select as usize]);
             ui.list_elements(&mut action_list, action_focus as usize);
         }
         ui.end();
 
         if let Some(key) = key_curr.take() {
             match key {
-                constants::KEY_UP => ui.list_up(&mut file_focus),
-                constants::KEY_DOWN => ui.list_down(&mut file_focus, &file_list),
+                constants::KEY_UP => {
+                    if action_focus > 0 {
+                        action_focus -= 1;
+                    }
+                }
+                constants::KEY_DOWN => {
+                    if action_focus < (action_list.len() - 1) as i32 {
+                        action_focus += 1;
+                    }
+                }
+                constants::KEY_LEFT => {
+                    if action_focus == 1 {
+                        if encryption_select > 0 {
+                            encryption_select -= 1;
+                        }
+                    } else if action_focus == 2 {
+                        if decryption_select > 0 {
+                            decryption_select -= 1;
+                        }
+                    }
+                }
+                constants::KEY_RIGHT => {
+                    if action_focus == 1 {
+                        if encryption_select < (method_list.len() - 1) as i32 {
+                            encryption_select += 1;
+                        }
+                    } else if action_focus == 2 {
+                        if decryption_select < (method_list.len() - 1) as i32 {
+                            decryption_select += 1;
+                        }
+                    }
+                }
                 100 => {
                     if explorer.dir_down() {
                         notification.push_str("Moved directory down");
@@ -338,16 +383,8 @@ fn main() {
                         file_focus = 0;
                     }
                 }
-                119 => {
-                    if action_focus > 0 {
-                        action_focus -= 1;
-                    }
-                }
-                115 => {
-                    if action_focus < (action_list.len() - 1) as i32 {
-                        action_focus += 1;
-                    }
-                }
+                119 => ui.list_up(&mut file_focus),
+                115 => ui.list_down(&mut file_focus, &file_list),
                 113 => {
                     quit = true;
                 }

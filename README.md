@@ -9,7 +9,7 @@ Project status: Mostly completed (25.10.2023)
 - [x] Implement basic Encryption/Decryption methods
 - [x] Create File Handler to encrypt/decrypt/modify files
 - [x] Create user friendly UI for the application
-- [ ] Create different encryption methods handling
+- [x] Create different encryption methods handling
 - [ ] Implement advanced encryption methods
 - [ ] (?) Switch between file explorer and action selector using TAB instead of w/s and arrows navigation
 
@@ -33,8 +33,8 @@ Rust was chosen as the programming language for this project due to its emphasis
 #### File/Directory navigation:
 | Key | Action |
 | ------------- | ------------- |
-| <kbd>&uparrow;</kbd> | focus up  |
-| <kbd>&downarrow;</kbd> | focus down |
+| <kbd>w</kbd> | focus up  |
+| <kbd>s</kbd> | focus down |
 | <kbd>d</kbd> | directory down |
 | <kbd>q</kbd> | quit |
 | <kbd>Enter</kbd> | directory up / perform selected action on file |
@@ -42,8 +42,10 @@ Rust was chosen as the programming language for this project due to its emphasis
 #### Action selection
 | Key | Action |
 | ------------- | ------------- |
-| <kbd>w</kbd> | focus up |
-| <kbd>s</kbd> | focus down |
+| <kbd>&uparrow;</kbd> | focus up |
+| <kbd>&downarrow;</kbd> | focus down |
+| <kbd>&larr;</kbd> | encryption/decryption method left |
+| <kbd>&rarr;</kbd> | encryption/decryption method right |
 
 - - - -
 Thank you for exploring this project, and I hope it demonstrates my dedication to the craft of software development and my commitment to delivering high-quality solutions. If you have any questions or would like to collaborate with me, please feel free to get in touch.
