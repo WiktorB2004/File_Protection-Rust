@@ -172,13 +172,18 @@ impl FileHandler {
     ) {
         self.set_path(path);
         self.method = method;
+        // TODO: Add notification about decrypting using incorrect method
         match self.method.as_str() {
             "Read file" => {
                 notification.push_str("Opening selected file");
                 self.open_file();
             }
-            "Encrypt" => self.caesar_encrypt(1),
-            "Decrypt" => self.caesar_decrypt(1),
+            "Encrypt Caesar-1" => self.caesar_encrypt(1),
+            "Encrypt Caesar-5" => self.caesar_encrypt(5),
+            "Encrypt Caesar-12" => self.caesar_encrypt(12),
+            "Decrypt Caesar-1" => self.caesar_decrypt(1),
+            "Decrypt Caesar-5" => self.caesar_decrypt(5),
+            "Decrypt Caesar-12" => self.caesar_decrypt(12),
             "Switch between full/short path" => {
                 *path_mode = !*path_mode;
             }
