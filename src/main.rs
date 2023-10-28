@@ -1,6 +1,5 @@
 // TODO(#15): Add error handling
 // TODO(#20): Make sure it is working with Linux and Windows
-// TODO(#25): Create documentation, README.md file
 
 use ncurses::*;
 use std::{
