@@ -171,7 +171,7 @@ impl FileHandler {
     ) {
         self.set_path(path);
         self.method = method;
-        // TODO: Add notification about decrypting using incorrect method
+        // TODO(#26): Add notification about decrypting using incorrect method
         match self.method.as_str() {
             "Read file" => {
                 notification.push_str("Opening selected file");
