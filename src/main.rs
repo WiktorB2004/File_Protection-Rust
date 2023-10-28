@@ -1,5 +1,6 @@
 // TODO(#15): Add error handling
 // TODO(#20): Make sure it is working with Linux and Windows
+// TODO(#27): Implement more advanced encryption methods
 
 use ncurses::*;
 use std::{
